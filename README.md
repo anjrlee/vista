@@ -16,6 +16,3 @@
   - for .env
     - cp -n .env.example .env
     - or copy .env.example and rename it into .env
-    
-
-           - 
