@@ -6,6 +6,9 @@
   - reminder
     - 準備一隻andriod手機
     - download andriod studio 
+  - assets
+    - 放一些照片or logo啥的
+    - 或是josn
 - backend
   - how to run 
     1. download and open docker
