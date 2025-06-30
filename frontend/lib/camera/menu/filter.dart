@@ -4,6 +4,7 @@ import 'menu_item.dart';
 
 void showFilterMenu(BuildContext context) {
   final filterItems = [
+    const MenuItem(imagePath: 'assets/filters/black_white.png', label: 'none', shape: ImageShape.circle),
     const MenuItem(imagePath: 'assets/filters/black_white.png', label: '黑白', shape: ImageShape.circle),
     const MenuItem(imagePath: 'assets/filters/nostalgic.png', label: '懷舊', shape: ImageShape.circle),
     const MenuItem(imagePath: 'assets/filters/hdr.png', label: 'HDR', shape: ImageShape.circle),

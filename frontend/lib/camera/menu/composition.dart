@@ -4,6 +4,7 @@ import 'menu_item.dart';
 
 void showCompositionMenu(BuildContext context) {
   final compositionItems = [
+    const MenuItem(imagePath: 'assets/filters/black_white.png', label: 'none', shape: ImageShape.square),
     const MenuItem(imagePath: 'assets/filters/black_white.png', label: '黑白', shape: ImageShape.square),
     const MenuItem(imagePath: 'assets/filters/nostalgic.png', label: '懷舊', shape: ImageShape.square),
     const MenuItem(imagePath: 'assets/filters/hdr.png', label: 'HDR', shape: ImageShape.square),

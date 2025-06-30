@@ -1,3 +1,4 @@
+// album.dart
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'dart:typed_data';
@@ -6,24 +7,29 @@ class AlbumPage extends StatefulWidget {
   const AlbumPage({super.key});
 
   @override
-  State<AlbumPage> createState() => _AlbumPageState();
+  AlbumPageState createState() => AlbumPageState();
 }
 
-class _AlbumPageState extends State<AlbumPage> {
+class AlbumPageState extends State<AlbumPage> {
   List<AssetEntity> photos = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchPhotos();
+    fetchPhotos();
   }
 
-  Future<void> _fetchPhotos() async {
+  Future<void> fetchPhotos() async {
+    setState(() {
+      isLoading = true;
+    });
+
     final permitted = await PhotoManager.requestPermissionExtend();
     if (!permitted.isAuth) {
       setState(() {
         isLoading = false;
+        photos = [];
       });
       return;
     }
@@ -34,7 +40,7 @@ class _AlbumPageState extends State<AlbumPage> {
     );
 
     if (albums.isNotEmpty) {
-      List<AssetEntity> media = await albums[0].getAssetListPaged(page:0, size:100);
+      List<AssetEntity> media = await albums[0].getAssetListPaged(page: 0, size: 100);
       setState(() {
         photos = media;
         isLoading = false;

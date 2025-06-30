@@ -4,6 +4,7 @@ import 'menu_item.dart';
 
 void showActionMenu(BuildContext context) {
   final actionItems = [
+    const MenuItem(imagePath: 'assets/filters/black_white.png', label: 'none', shape: ImageShape.roundedRect),
     const MenuItem(imagePath: 'assets/filters/black_white.png', label: '黑白', shape: ImageShape.roundedRect),
     const MenuItem(imagePath: 'assets/filters/nostalgic.png', label: '懷舊', shape: ImageShape.roundedRect),
     const MenuItem(imagePath: 'assets/filters/hdr.png', label: 'HDR', shape: ImageShape.roundedRect),

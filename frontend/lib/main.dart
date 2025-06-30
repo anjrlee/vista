@@ -9,18 +9,14 @@ import 'dart:io';
 
 late List<CameraDescription> _cameras;
 
-
-
-
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   print("hello");
   print('Current working dir: ${Directory.current.path}');
   await dotenv.load(fileName: '.env');
   print('API_BASE_URL: ${dotenv.env['API_BASE_URL']}');
-  _cameras = await availableCameras(); // ✅ 初始化
-  runApp(NavigationBarApp(cameras: _cameras)); // ✅ 傳給 App
+  _cameras = await availableCameras(); // 初始化相機
+  runApp(NavigationBarApp(cameras: _cameras)); // 傳給App
 }
 
 class NavigationBarApp extends StatelessWidget {
@@ -48,9 +44,16 @@ class NavigationExample extends StatefulWidget {
 class _NavigationExampleState extends State<NavigationExample> {
   int currentPageIndex = 0;
 
+  // 建立 GlobalKey 用於控制 AlbumPage
+  final GlobalKey<AlbumPageState> albumPageKey = GlobalKey<AlbumPageState>();
+
   void switchToAlbum() {
     setState(() {
       currentPageIndex = 1; // 切到相簿頁
+    });
+    // 延遲呼叫刷新照片，確保頁面已建立
+    Future.delayed(const Duration(milliseconds: 100), () {
+      albumPageKey.currentState?.fetchPhotos();
     });
   }
 
@@ -58,10 +61,10 @@ class _NavigationExampleState extends State<NavigationExample> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       const HomePage(),
-      const AlbumPage(),
+      AlbumPage(key: albumPageKey),
       CameraPage(
         cameras: widget.cameras,
-        onSwitchToAlbum: switchToAlbum,  // 傳 callback
+        onSwitchToAlbum: switchToAlbum,  // 傳callback
       ),
       const ProfilePage(),
     ];
@@ -72,6 +75,13 @@ class _NavigationExampleState extends State<NavigationExample> {
           setState(() {
             currentPageIndex = index;
           });
+
+          // 每次切換到相簿頁時刷新照片
+          if (index == 1) {
+            Future.delayed(const Duration(milliseconds: 100), () {
+              albumPageKey.currentState?.fetchPhotos();
+            });
+          }
         },
         indicatorColor: Colors.amber,
         selectedIndex: currentPageIndex,
