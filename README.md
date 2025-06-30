@@ -14,7 +14,7 @@
     1. download and open docker
     2. (在root)docker compose up --build
   - routes
-    - 多一個route file in routes記得在main.py import
+    - 多一個route file in routes記得在main.py import和註冊
   - 有多pip install => 到requirement.txt加
   
 - others
