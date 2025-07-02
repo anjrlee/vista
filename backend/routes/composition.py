@@ -1,12 +1,19 @@
 from fastapi import APIRouter
+import aestheticScore
 
 router = APIRouter()
+
+
 
 @router.post("/compositionDetection")
 def compositionDetection():
     return {"composition": "rule_of_thirds"}
 
 
-@router.get("/testComposition")
+@router.get("/filterAlbum")
 def testComposition():
-    return {"composition": "rule_of_thirds"}
+    return {"composition": function1()}
+
+@router.post("/testComposition")
+def testComposition():
+    return {"composition": function1()}

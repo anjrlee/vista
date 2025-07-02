@@ -24,6 +24,9 @@
     - 改了.env也要改.env.example不然不會推上去
   - firebase key
     - 塞到backend/config裡
+    - 改了key要改backend的.env和.env.example
+  - 新增資料夾到assets記得到pubspec.yaml裡面加
+  - 
 
 - 注意
   - post/get 後端用baseUrl = dotenv.env['API_BASE_URL']/xxxx, 這樣到時候架上去改一行就好

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'featureCard.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -12,82 +10,32 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool loading = false;
-  String error = '';
-  String? message;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchTestMessage(); // ✅ 一進來就自動抓 /test
-  }
-
-  Future<void> fetchTestMessage() async {
-    final baseUrl = dotenv.env['API_BASE_URL'];
-    if (baseUrl == null || baseUrl.isEmpty) {
-      setState(() {
-        error = '❌ 未設定 API_BASE_URL';
-      });
-      return;
-    }
-
-    setState(() {
-      loading = true;
-      error = '';
-      message = null;
-    });
-
-    try {
-      final url = Uri.parse('$baseUrl/test');
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          message = data['message'] ?? '成功但沒有 message 欄位';
-        });
-      } else {
-        setState(() {
-          error = '❌ 錯誤代碼：${response.statusCode}';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        error = '❌ 發生例外：$e';
-      });
-    } finally {
-      setState(() {
-        loading = false;
-      });
-    }
-  }
-
-  Future<void> postTestFirebase() async {
-    final baseUrl = dotenv.env['API_BASE_URL'];
-    if (baseUrl == null || baseUrl.isEmpty) return;
-
-    final url = Uri.parse('$baseUrl/testFirebase');
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({}), // 你可以加上資料
-      );
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ 已成功寫入 Firebase')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ 失敗：${response.statusCode}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ 發送錯誤：$e')),
-      );
-    }
-  }
+  final List<Map<String, dynamic>> items = [
+    {
+      'title': '新增我的動作',
+      'imageUrls': ['assets/featureCard/pose.png',],
+      'isMultiPhoto': false,
+    },
+    {
+      'title': '本日推薦',
+      'imageUrls': ['assets/featureCard/google_logo.png',],
+      'isMultiPhoto': true,
+    },
+    {
+      'title': 'Tutorial',
+      'imageUrls': [
+        'assets/featureCard/tutorial.jpg',
+      ],
+      'isMultiPhoto': false,
+    },
+    {
+      'title': '上傳照片分析',
+      'imageUrls': [
+        'assets/featureCard/photoAnalyze.png',
+      ],
+      'isMultiPhoto': false,
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -95,24 +43,39 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home Page')),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (loading)
-              const CircularProgressIndicator()
-            else if (error.isNotEmpty)
-              Text(error, style: const TextStyle(color: Colors.red))
-            else
-              Text(
-                message ?? '無資料',
-                style: theme.textTheme.titleLarge,
+            Center(
+              child: Text(
+                '歡迎使用',
+                style: theme.textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: postTestFirebase,
-              child: const Text('testFirebase（寫入日期）'),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                children: items.map((item) {
+                  return FeatureCard(
+                    imageUrls: item['imageUrls'],
+                    title: item['title'],
+                    isMultiPhoto: item['isMultiPhoto'],
+                    showLock: item['title'] != '本日推薦',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${item['title']} 尚未解鎖')),
+                      );
+                    },
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ),
