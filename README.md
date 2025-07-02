@@ -1,3 +1,7 @@
+- 要裝的東西
+  - flutter sdk
+  - andriod studio
+  - docker
 - frontend
   - how to run 
     1. (cd frontend)
