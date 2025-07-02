@@ -1,22 +1,24 @@
+// camera_page.dart
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'package:flutter/rendering.dart';
-import 'widgets/camera_preview_widget.dart';
-import 'widgets/camera_controls_widget.dart';
-import 'widgets/photo_animation_widget.dart';
-import 'widgets/camera_lines.dart';
-import 'widgets/camera_hint.dart';
 
 import 'menu/composition.dart';
 import 'menu/action.dart';
 import 'menu/filter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'widgets/camera_lines.dart'; // 引入 CompositionLines
+import 'widgets/camera_hint.dart';
+import 'widgets/camera_preview_widget.dart';
+import 'widgets/camera_controls_widget.dart';
+import 'widgets/photo_animation_widget.dart';
 
 class CameraPage extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -41,18 +43,23 @@ class _CameraPageState extends State<CameraPage> {
   double _imageSize = 0;
   double _left = 0;
   double _top = 0;
-
   String _composition = "none"; // 預設構圖
   String _action = "none"; // 預設構圖
   String _filter = "none"; // 預設構圖
-  String predictedComposition="";
+
+  String predictedComposition = "";
+
+  // 逐条线高亮相关状态
+  bool isAlignmentMode = false; // 是否处于逐条线对齐流程
+  int lineIndex = 0; // 当前对第几条线进行对齐
+  List<double> scores = [];
+
   final hint = {
     "hasText": false,
     "hasButton": true,
     "buttonText": "點擊獲取構圖推薦",
-    "textText": "jjj",
+    "textText": "",
   };
-
 
   @override
   void initState() {
@@ -72,6 +79,36 @@ class _CameraPageState extends State<CameraPage> {
   void dispose() {
     controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleShowAction() async {
+    final selected = await showActionMenu(context, selectedLabel: _action);
+    if (selected != null && mounted) {
+      setState(() {
+        _action = selected;
+        print(_action);
+      });
+    }
+  }
+
+  Future<void> _handleShowFilter() async {
+    final selected = await showFilterMenu(context, selectedLabel: _filter);
+    if (selected != null && mounted) {
+      setState(() {
+        _filter = selected;
+        print(_filter);
+      });
+    }
+  }
+
+  Future<void> _handleShowComposition() async {
+    final selected = await showCompositionMenu(context, selectedLabel: _composition);
+    if (selected != null && mounted) {
+      setState(() {
+        _composition = selected;
+        print(_composition);
+      });
+    }
   }
 
   Future<void> _takeScreenshot() async {
@@ -106,43 +143,10 @@ class _CameraPageState extends State<CameraPage> {
 
     await _takeScreenshot();
 
-    // 模擬存檔成功
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('照片已儲存')),
     );
   }
-
-  Future<void> _handleShowComposition() async {
-    final selected = await showCompositionMenu(context, selectedLabel: _composition);
-    if (selected != null && mounted) {
-      setState(() {
-        _composition = selected;
-        print(_composition);
-      });
-    }
-  }
-
-  Future<void> _handleShowAction() async {
-    final selected = await showActionMenu(context, selectedLabel: _action);
-    if (selected != null && mounted) {
-      setState(() {
-        _action = selected;
-        print(_action);
-      });
-    }
-  }
-
-  Future<void> _handleShowFilter() async {
-    final selected = await showFilterMenu(context, selectedLabel: _filter);
-    if (selected != null && mounted) {
-      setState(() {
-        _filter = selected;
-        print(_filter);
-      });
-    }
-  }
-
-
 
   Future<void> getComposition() async {
     try {
@@ -151,43 +155,27 @@ class _CameraPageState extends State<CameraPage> {
         return;
       }
 
-      // 1. 拍照，但不顯示動畫
       final XFile file = await controller.takePicture();
-
-      // 2. 讀檔案成 bytes
       final bytes = await file.readAsBytes();
-
-      // 3. 將 bytes 編碼成 base64
       final base64Image = base64Encode(bytes);
 
-      // 4. 組裝 POST 請求的 JSON body
-      final body = jsonEncode({
-        'image': base64Image,
-      });
-
-      // 5. 從環境變數取得 API url
+      final body = jsonEncode({'image': base64Image});
       final apiUrl = '${dotenv.env['API_BASE_URL']}/compositionDetection';
       print("apiURL=$apiUrl");
 
-      // 6. 發送 POST 請求
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: body,
       );
 
-      // 7. 印出後端回傳
       if (response.statusCode == 200) {
-        print('後端回傳: ${response.body}');
-        final data = jsonDecode(response.body); // 轉 Map
-
+        final data = jsonDecode(response.body);
         setState(() {
           hint["hasText"] = true;
           hint["buttonText"] = "套用";
           hint["textText"] = "推薦構圖: ${data['composition'] ?? ''}";
-          predictedComposition=data['composition'];
+          predictedComposition = data['composition'];
         });
       } else {
         print('錯誤: ${response.statusCode} ${response.reasonPhrase}');
@@ -197,6 +185,122 @@ class _CameraPageState extends State<CameraPage> {
     }
   }
 
+  Future<double?> takePictureAndGetScoreForLine(int lineIdx) async {
+    if (!controller.value.isInitialized) {
+      print('Camera not initialized');
+      return null;
+    }
+
+    try {
+      final XFile file = await controller.takePicture();
+      final bytes = await file.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      final body = jsonEncode({'image': base64Image, 'line_index': lineIdx});
+      final apiUrl = '${dotenv.env['API_BASE_URL']}/aestheticScoreFunction';
+      print("score api url = $apiUrl for line $lineIdx");
+
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        double score = data;
+
+
+        print(response.body);
+        print('分數: $score');
+        print(score==null);
+        return score;
+
+      } else {
+        print('錯誤: ${response.statusCode} ${response.reasonPhrase}');
+        return null;
+      }
+    } catch (e) {
+      print('例外錯誤: $e');
+      return null;
+    }
+  }
+
+  int totalLinesForComposition(String composition) {
+    switch (composition) {
+      case 'vertical':
+        return 2;
+      case 'horizontal':
+        return 2;
+      case 'rule_of_thirds':
+        return 4;
+    // 其他构图可自行补充
+      default:
+        return 0;
+    }
+  }
+
+  void startAlignmentMode() {
+    if (predictedComposition.isEmpty) return;
+
+    setState(() {
+      _composition = predictedComposition;
+      isAlignmentMode = true;
+      lineIndex = 0;
+      scores = [];
+      hint["hasText"] = true;
+      hint["buttonText"] = "我對好了";
+      hint["textText"] = "請將主體對準第 ${lineIndex + 1} 條線";
+    });
+  }
+
+  Future<void> onUserConfirmLine() async {
+    double? score = await takePictureAndGetScoreForLine(lineIndex);
+    if (score == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('評分失敗，請重試')),
+      );
+      return;
+    }
+
+    scores.add(score);
+    int totalLines = totalLinesForComposition(_composition);
+
+    if (lineIndex + 1 >= totalLines) {
+      // 對齊流程結束，選最佳線
+      int bestLineIndex = 0;
+      double bestScore = scores[0];
+      for (int i = 1; i < scores.length; i++) {
+        if (scores[i] > bestScore) {
+          bestScore = scores[i];
+          bestLineIndex = i;
+        }
+      }
+
+      setState(() {
+
+        lineIndex = bestLineIndex;
+        hint["textText"] = "主體對準第 ${bestLineIndex + 1} 條線，請按快門拍照";
+        hint["buttonText"] = "拍照";
+      });
+    } else {
+      setState(() {
+        lineIndex++;
+        hint["textText"] = "請將主體對準第 ${lineIndex + 1} 條線";
+      });
+    }
+  }
+
+  Future<void> onFinalCapture() async {
+    await _takePictureAndSave();
+    setState(() {
+      hint["textText"] = "";
+      hint["buttonText"] = "點擊獲取構圖推薦";
+      predictedComposition = "";
+      _composition = "none";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -207,11 +311,16 @@ class _CameraPageState extends State<CameraPage> {
     return Scaffold(
       body: Stack(
         children: [
-          CameraPreviewWidget(
-            key: previewKey,
-            controller: controller,
+          Positioned.fill(
+            child: RepaintBoundary(
+              key: previewKey,
+              child: CameraPreviewWidget(controller: controller),
+            ),
           ),
-          CompositionLines(composition: _composition),
+          CompositionLines(
+            composition: _composition,
+            highlightIndex: isAlignmentMode ? lineIndex : null,
+          ),
           CameraHintText(
             hasButton: hint["hasButton"] == true,
             hasText: hint["hasText"] == true,
@@ -221,10 +330,12 @@ class _CameraPageState extends State<CameraPage> {
               print('按鈕點擊，傳回：$value');
               if (value == "點擊獲取構圖推薦") {
                 await getComposition();
-              }else if (value == "套用") {
-                setState(() {
-                   _composition = predictedComposition;
-                });
+              } else if (value == "套用") {
+                startAlignmentMode();
+              } else if (value == "我對好了") {
+                await onUserConfirmLine();
+              } else if (value == "拍照") {
+                await onFinalCapture();
               }
             },
           ),

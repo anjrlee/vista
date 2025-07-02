@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-#import aestheticScore
+
 
 router = APIRouter()
 

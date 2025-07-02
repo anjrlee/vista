@@ -1,3 +1,8 @@
+from fastapi import APIRouter
 
+
+router = APIRouter()
+
+@router.post("/aestheticScoreFunction")
 def aestheticScoreFunction():
-    return 0
+    return 6.8
