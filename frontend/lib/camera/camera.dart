@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/rendering.dart';
-
+import 'package:http_parser/http_parser.dart';
 import 'menu/composition.dart';
 import 'menu/action.dart';
 import 'menu/filter.dart';
@@ -82,28 +82,28 @@ class _CameraPageState extends State<CameraPage> {
 
   ColorFilter? _getColorFilterForSelected(String filter) {
     switch (filter) {
-      case 'black_white':
+      case '黑白':
         return const ColorFilter.matrix(<double>[
           0.2126, 0.7152, 0.0722, 0, 0,
           0.2126, 0.7152, 0.0722, 0, 0,
           0.2126, 0.7152, 0.0722, 0, 0,
           0, 0, 0, 1, 0,
         ]);
-      case 'vintage':
+      case '復古':
         return const ColorFilter.matrix(<double>[
           0.9, 0.5, 0.1, 0, 0,
           0.3, 0.7, 0.2, 0, 0,
           0.2, 0.3, 0.5, 0, 0,
           0, 0, 0, 1, 0,
         ]);
-      case 'hdr':
+      case 'HDR':
         return const ColorFilter.matrix(<double>[
           1.3, 0, 0, 0, 0,
           0, 1.3, 0, 0, 0,
           0, 0, 1.3, 0, 0,
           0, 0, 0, 1, 0,
         ]);
-      case 'japanese':
+      case '日系':
         return const ColorFilter.matrix(<double>[
           1.1, 0.1, 0.1, 0, 10,
           0.0, 1.0, 0.0, 0, 0,
@@ -180,24 +180,34 @@ class _CameraPageState extends State<CameraPage> {
   Future<void> getComposition() async {
     try {
       if (!controller.value.isInitialized) return;
+
       final XFile file = await controller.takePicture();
-      final bytes = await file.readAsBytes();
-      final base64Image = base64Encode(bytes);
-      final body = jsonEncode({'image': base64Image});
-      final apiUrl = '${dotenv.env['API_BASE_URL']}/compositionDetection';
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: body,
-      );
+
+      final apiUrl = Uri.parse('${dotenv.env['API_BASE_URL']}/compositionDetection');
+
+
+      var request = http.MultipartRequest('POST', apiUrl);
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        file.path,
+        contentType: MediaType('image', 'jpeg'), // 若確定是 jpeg，沒有也行
+      ));
+
+      var response = await request.send();
+
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        // 讀回應字串
+        final respStr = await response.stream.bytesToString();
+        final data = jsonDecode(respStr);
+
         setState(() {
           hint["hasText"] = true;
           hint["buttonText"] = "套用";
-          hint["textText"] = "推薦構圖: \${data['composition'] ?? ''}";
+          hint["textText"] = "推薦構圖: ${data['composition'] ?? ''}";
           predictedComposition = data['composition'];
         });
+      } else {
+        print('伺服器回傳錯誤，狀態碼: ${response.statusCode}');
       }
     } catch (e) {
       print('例外錯誤: $e');
@@ -206,20 +216,32 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<double?> takePictureAndGetScoreForLine(int lineIdx) async {
     if (!controller.value.isInitialized) return null;
+
     try {
       final XFile file = await controller.takePicture();
-      final bytes = await file.readAsBytes();
-      final base64Image = base64Encode(bytes);
-      final body = jsonEncode({'image': base64Image, 'line_index': lineIdx});
-      final apiUrl = '${dotenv.env['API_BASE_URL']}/aestheticScoreFunction';
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: body,
-      );
+      final apiUrl = Uri.parse('${dotenv.env['API_BASE_URL']}/aestheticScoreFunction');
+
+      var request = http.MultipartRequest('POST', apiUrl);
+
+      // 加入圖片檔，field 名稱 "image"
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        file.path,
+        contentType: MediaType('image', 'jpeg'), // 如果是 jpeg
+      ));
+
+
+      request.fields['line_index'] = lineIdx.toString();
+
+      final response = await request.send();
+
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        double score = data;
+
+        final respStr = await response.stream.bytesToString();
+
+
+        final score = double.tryParse(respStr);
+        print("score= $score");
         return score;
       } else {
         return null;
@@ -270,13 +292,13 @@ class _CameraPageState extends State<CameraPage> {
       }
       setState(() {
         lineIndex = bestLineIndex;
-        hint["textText"] = "主體對準第 \${bestLineIndex + 1} 條線，請按快門拍照";
+        hint["textText"] = "主體對準第 ${bestLineIndex + 1} 條線，請按快門拍照";
         hint["buttonText"] = "拍照";
       });
     } else {
       setState(() {
         lineIndex++;
-        hint["textText"] = "請將主體對準第 \${lineIndex + 1} 條線";
+        hint["textText"] = "請將主體對準第 ${lineIndex + 1} 條線";
       });
     }
   }
@@ -331,7 +353,6 @@ class _CameraPageState extends State<CameraPage> {
             },
           ),
           CameraControlsWidget(
-            latestThumbnail: null,
             onTakePicture: _takePictureAndSave,
             onSwitchToAlbum: widget.onSwitchToAlbum,
             onShowFilter: _handleShowFilter,

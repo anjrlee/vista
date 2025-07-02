@@ -7,11 +7,11 @@ import './menu_item.dart';
 
 Future<String?> showFilterMenu(BuildContext context, {String? selectedLabel}) {
   final filterItems = [
-    const MenuItem(imagePath: 'assets/filters/black_white.png', label: 'none', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/black_white.png', label: '黑白', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/nostalgic.png', label: 'vintage', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/hdr.png', label: 'HDR', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/japanese.png', label: '日系', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/filters/original.jpg', label: 'none', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/filters/blackWhite.jpg', label: '黑白', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/filters/vintage.jpg', label: '復古', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/filters/HDR.jpg', label: 'HDR', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/filters/japanese.jpg', label: '日系', shape: ImageShape.square),
   ];
 
   int selectedIndex = 0;

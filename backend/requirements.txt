@@ -3,3 +3,9 @@ gunicorn
 uvicorn
 python-dotenv
 firebase-admin
+torch
+torchvision
+timm
+numpy
+pillow
+albumentations

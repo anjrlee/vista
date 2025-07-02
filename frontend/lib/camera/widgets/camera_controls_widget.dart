@@ -1,9 +1,10 @@
+// camera_controls_widget.dart
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:photo_manager/photo_manager.dart';
 
-class CameraControlsWidget extends StatelessWidget {
-  final Uint8List? latestThumbnail;
-  final VoidCallback onTakePicture;
+class CameraControlsWidget extends StatefulWidget {
+  final Future<void> Function() onTakePicture;
   final VoidCallback? onSwitchToAlbum;
   final VoidCallback onShowFilter;
   final VoidCallback onShowAction;
@@ -11,13 +12,50 @@ class CameraControlsWidget extends StatelessWidget {
 
   const CameraControlsWidget({
     super.key,
-    this.latestThumbnail,
     required this.onTakePicture,
     this.onSwitchToAlbum,
     required this.onShowFilter,
     required this.onShowAction,
     required this.onShowComposition,
   });
+
+  @override
+  State<CameraControlsWidget> createState() => _CameraControlsWidgetState();
+}
+
+class _CameraControlsWidgetState extends State<CameraControlsWidget> {
+  Uint8List? latestThumbnail;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLatestThumbnail();
+  }
+
+  Future<void> _loadLatestThumbnail() async {
+    final permission = await PhotoManager.requestPermissionExtend();
+    if (!permission.isAuth) return;
+
+    final albums = await PhotoManager.getAssetPathList(onlyAll: true);
+    if (albums.isEmpty) return;
+
+    final recentAssets = await albums[0].getAssetListPaged(page: 0, size: 1);
+    if (recentAssets.isEmpty) return;
+
+    final thumb = await recentAssets[0].thumbnailDataWithSize(const ThumbnailSize(100, 100));
+
+    if (mounted) {
+      setState(() {
+        latestThumbnail = thumb;
+      });
+    }
+  }
+
+  Future<void> _handleTakePicture() async {
+    await widget.onTakePicture();
+    await Future.delayed(const Duration(milliseconds: 500));
+    await _loadLatestThumbnail();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,32 +66,22 @@ class CameraControlsWidget extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // 相簿按鈕
           _AlbumButton(
             thumbnail: latestThumbnail,
-            onPressed: onSwitchToAlbum,
+            onPressed: widget.onSwitchToAlbum,
           ),
-
-          // 濾鏡按鈕
           _ControlButton(
             icon: Icons.tonality,
-            onPressed: onShowFilter,
+            onPressed: widget.onShowFilter,
           ),
-
-          // 拍照按鈕
-          _CaptureButton(onPressed: onTakePicture),
-
-          // 動作按鈕
+          _CaptureButton(onPressed: _handleTakePicture),
           _ControlButton(
             icon: Icons.accessibility_new,
-            onPressed: onShowAction,
+            onPressed: widget.onShowAction,
           ),
-
-          // 構圖按鈕
           _ControlButton(
             icon: Icons.grid_on,
-            onPressed: onShowComposition,
-
+            onPressed: widget.onShowComposition,
           ),
         ],
       ),
