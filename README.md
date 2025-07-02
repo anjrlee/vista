@@ -34,6 +34,8 @@
 
 - 注意
   - post/get 後端用baseUrl = dotenv.env['API_BASE_URL']/xxxx, 這樣到時候架上去改一行就好
+  - 有加model到backend在調用的時候先寫在.env再從.env調，因為上雲應該會分開，如果直接寫死在裡面會很麻煩
+  
 
 - 需要你們幫忙接的地方!(感恩)
   - 劉威佑
