@@ -34,4 +34,9 @@
 
 - 注意
   - post/get 後端用baseUrl = dotenv.env['API_BASE_URL']/xxxx, 這樣到時候架上去改一行就好
-  
+
+- 需要你們幫忙接的地方!(感恩)
+  - 劉威佑
+    - backend/routes/aestheticScore.py
+  - 趙以婷
+    - backend/services/remove_portrait.py
