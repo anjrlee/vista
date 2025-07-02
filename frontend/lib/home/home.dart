@@ -18,7 +18,12 @@ class _HomePageState extends State<HomePage> {
     },
     {
       'title': '本日推薦',
-      'imageUrls': ['assets/featureCard/google_logo.png',],
+      'imageUrls': [
+        'assets/featureCard/recommendation1.jpg',
+        'assets/featureCard/recommendation2.jpg',
+        'assets/featureCard/recommendation3.jpg',
+        'assets/featureCard/recommendation4.jpg',
+      ],
       'isMultiPhoto': true,
     },
     {
