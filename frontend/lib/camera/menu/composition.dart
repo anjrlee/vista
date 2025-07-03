@@ -5,15 +5,15 @@ import './menu_item.dart';
 
 Future<String?> showCompositionMenu(BuildContext context, {String? selectedLabel}) {
   final compositionItems = [
-    const MenuItem(imagePath: 'assets/filters/rule_of_thirds.png', label: 'none', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/rule_of_thirds.png', label: 'rule_of_thirds', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/center.png', label: 'center', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/diagonal.png', label: 'diagonal', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/rule_of_thirds.png', label: 'symmetric', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/center.png', label: 'horizontal', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/diagonal.png', label: 'vertical', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/center.png', label: 'triangle', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/diagonal.png', label: 'vanishing_point', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/composition/none.png', label: 'none', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/composition/center.png', label: 'center', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/composition/diagonal.png', label: 'diagonal', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/composition/horizontal.png', label: 'horizontal', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/composition/symmetric.png', label: 'symmetric', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/composition/rule_of_thirds.png', label: 'rule_of_thirds', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/composition/vertical.png', label: 'vertical', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/composition/triangle.png', label: 'triangle', shape: ImageShape.square),
+    const MenuItem(imagePath: 'assets/composition/vanishing_point.png', label: 'vanishing_point', shape: ImageShape.square),
   ];
 
   int selectedIndex = 0;
