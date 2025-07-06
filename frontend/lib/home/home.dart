@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'featureCard.dart';
+import 'photoScore.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -15,6 +16,8 @@ class _HomePageState extends State<HomePage> {
       'title': '新增我的動作',
       'imageUrls': ['assets/featureCard/pose.png',],
       'isMultiPhoto': false,
+      'showLock':true,
+      'onTap':''
     },
     {
       'title': '本日推薦',
@@ -25,6 +28,8 @@ class _HomePageState extends State<HomePage> {
         'assets/featureCard/recommendation4.jpg',
       ],
       'isMultiPhoto': true,
+      'showLock':false,
+      'onTap':''
     },
     {
       'title': 'Tutorial',
@@ -32,6 +37,8 @@ class _HomePageState extends State<HomePage> {
         'assets/featureCard/tutorial.jpg',
       ],
       'isMultiPhoto': false,
+      'showLock':true,
+      'onTap':''
     },
     {
       'title': '上傳照片分析',
@@ -39,6 +46,8 @@ class _HomePageState extends State<HomePage> {
         'assets/featureCard/photoAnalyze.png',
       ],
       'isMultiPhoto': false,
+      'showLock':false,
+      'onTap':() => const PhotoScore()
     },
   ];
 
@@ -72,12 +81,22 @@ class _HomePageState extends State<HomePage> {
                     imageUrls: item['imageUrls'],
                     title: item['title'],
                     isMultiPhoto: item['isMultiPhoto'],
-                    showLock: item['title'] != '本日推薦',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${item['title']} 尚未解鎖')),
-                      );
-                    },
+                    showLock: item['showLock'],
+                      onTap: () {
+                        if (item['onTap'] == '') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${item['title']} 尚未解鎖')),
+                          );
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => item['onTap'](), // 呼叫函數產生 widget
+                            ),
+                          );
+                        }
+                      }
+
                   );
                 }).toList(),
               ),
