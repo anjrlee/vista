@@ -259,7 +259,7 @@ class _CameraPageState extends State<CameraPage> {
       case 'rule_of_thirds':
         return 4;
       default:
-        return 0;
+        return 1;
     }
   }
 
@@ -272,7 +272,7 @@ class _CameraPageState extends State<CameraPage> {
       scores = [];
       hint["hasText"] = true;
       hint["buttonText"] = "我對好了";
-      hint["textText"] = "請將主體對準第 \${lineIndex + 1} 條線";
+      hint["textText"] = "請將背景主體對準紅色線/框框";
     });
   }
 
