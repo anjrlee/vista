@@ -6,6 +6,7 @@ plugins {
 }
 
 android {
+    // ndkVersion = "26.1.10909125" //不知道為啥改這個才跑的了
     namespace = "com.example.frontend"
     compileSdk = 35
     ndkVersion "26.1.10909125"
