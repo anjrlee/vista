@@ -50,4 +50,4 @@ async def aestheticScoreFunction(
     std = std_score(scores)
 
     # Return the result as a formatted string
-    return PlainTextResponse(f"{mean:.3f} ± {std:.3f}")
+    return PlainTextResponse(f"{mean:.2f}")
