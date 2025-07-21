@@ -61,6 +61,11 @@ class _CameraPageState extends State<CameraPage> {
     "textText": "",
   };
 
+  // --- 1. 新增 zoom 變數 ---
+  double _currentZoomLevel = 1.0;
+  double _minZoomLevel = 1.0;
+  double _maxZoomLevel = 1.0;
+
   @override
   void initState() {
     super.initState();
@@ -69,8 +74,13 @@ class _CameraPageState extends State<CameraPage> {
 
   void _initializeCamera() {
     controller = CameraController(widget.cameras[0], ResolutionPreset.high);
-    controller.initialize().then((_) {
+    controller.initialize().then((_) async {
       if (!mounted) return;
+
+      // --- 2. 初始化時取得最大最小 zoom level ---
+      _minZoomLevel = await controller.getMinZoomLevel();
+      _maxZoomLevel = await controller.getMaxZoomLevel();
+
       setState(() {});
     });
   }
@@ -211,7 +221,6 @@ class _CameraPageState extends State<CameraPage> {
     });
   }
 
-
   Future<void> getComposition() async {
     try {
       if (!controller.value.isInitialized) return;
@@ -219,7 +228,6 @@ class _CameraPageState extends State<CameraPage> {
       final XFile file = await controller.takePicture();
 
       final apiUrl = Uri.parse('${dotenv.env['API_BASE_URL']}/compositionDetection');
-
 
       var request = http.MultipartRequest('POST', apiUrl);
       request.files.add(await http.MultipartFile.fromPath(
@@ -265,15 +273,12 @@ class _CameraPageState extends State<CameraPage> {
         contentType: MediaType('image', 'jpeg'), // 如果是 jpeg
       ));
 
-
       request.fields['line_index'] = lineIdx.toString();
 
       final response = await request.send();
 
       if (response.statusCode == 200) {
-
         final respStr = await response.stream.bytesToString();
-
 
         final score = double.tryParse(respStr);
         print("score= $score");
@@ -366,6 +371,25 @@ class _CameraPageState extends State<CameraPage> {
               ),
             ),
           ),
+
+          // --- 3. 新增 Slider 來控制 zoom ---
+          Positioned(
+            bottom: 100,
+            left: 20,
+            right: 20,
+            child: Slider(
+              min: _minZoomLevel,
+              max: _maxZoomLevel,
+              value: _currentZoomLevel.clamp(_minZoomLevel, _maxZoomLevel),
+              onChanged: (value) async {
+                setState(() {
+                  _currentZoomLevel = value;
+                });
+                await controller.setZoomLevel(value);
+              },
+            ),
+          ),
+
           CompositionLines(
             composition: _composition,
             highlightIndex: isAlignmentMode ? lineIndex : null,
