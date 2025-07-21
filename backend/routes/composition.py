@@ -61,9 +61,7 @@ async def compositionDetection(image: UploadFile = File(...)):
 
 
 
-@router.get("/filterAlbum")
-def testComposition():
-    return {"composition": function1()}
+
 
 @router.post("/testComposition")
 def testComposition():

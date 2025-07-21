@@ -51,3 +51,11 @@ async def aestheticScoreFunction(
 
     # Return the result as a formatted string
     return PlainTextResponse(f"{mean:.2f}")
+
+
+
+@router.post("/filterAlbum")
+async def testComposition(request: Request):
+    data = await request.json()
+    print("接收到的 JSON 資料：", data)
+    return {"received": data}

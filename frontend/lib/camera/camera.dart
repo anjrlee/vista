@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:photo_manager/photo_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:http/http.dart' as http;
@@ -171,11 +172,45 @@ class _CameraPageState extends State<CameraPage> {
 
   Future<void> _takePictureAndSave() async {
     if (!controller.value.isInitialized) return;
-    await _takeScreenshot();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('照片已儲存')),
-    );
+
+    final XFile file = await controller.takePicture();
+
+    // ✅ 儲存到相簿
+    final AssetEntity? savedImage = await PhotoManager.editor.saveImageWithPath(file.path);
+
+    if (savedImage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('📸 照片已儲存到相簿')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ 儲存失敗')),
+      );
+    }
+
+    // 顯示動畫（可選）
+    final bytes = await file.readAsBytes();
+    setState(() {
+      _capturedBytes = bytes;
+      _showAnimation = true;
+      _imageSize = MediaQuery.of(context).size.width;
+      _left = 0;
+      _top = 0;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 50));
+    setState(() {
+      _imageSize = 60;
+      _left = 20;
+      _top = MediaQuery.of(context).size.height - 100;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 800));
+    setState(() {
+      _showAnimation = false;
+    });
   }
+
 
   Future<void> getComposition() async {
     try {

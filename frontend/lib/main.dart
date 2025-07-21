@@ -52,7 +52,7 @@ class _NavigationExampleState extends State<NavigationExample> {
       currentPageIndex = 1; // 切到相簿頁
     });
     // 延遲呼叫刷新照片，確保頁面已建立
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 200), () {
       albumPageKey.currentState?.fetchPhotos();
     });
   }
