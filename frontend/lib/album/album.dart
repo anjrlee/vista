@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:http_parser/http_parser.dart';
 
 class AlbumPage extends StatefulWidget {
   const AlbumPage({super.key});
@@ -73,6 +74,8 @@ class AlbumPageState extends State<AlbumPage> {
     });
   }
 
+
+
   Future<void> filterSelectedPhotos() async {
     if (selectedPhotos.length > 30) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,16 +106,26 @@ class AlbumPageState extends State<AlbumPage> {
     final baseUrl = dotenv.env['API_BASE_URL'];
     if (baseUrl == null) return;
 
-    final List<String> ids = selectedPhotos.map((e) => e.id).toList();
+    final uri = Uri.parse('$baseUrl/filterAlbum');
+    final request = http.MultipartRequest('POST', uri);
 
     try {
+      // 將所有選中的照片轉為 file 加入 request.files
+      for (AssetEntity entity in selectedPhotos) {
+        final file = await entity.file;
+        if (file != null) {
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'image',
+              file.path,
+              contentType: MediaType('image', 'jpeg'),
+            ),
+          );
+        }
+      }
 
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/filterAlbum'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'photo_ids': ids}),
-      );
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
         final List<bool> results = List<bool>.from(jsonDecode(response.body));
@@ -123,7 +136,6 @@ class AlbumPageState extends State<AlbumPage> {
             toKeep.add(photo);
           } else {
             await PhotoManager.editor.deleteWithIds([photo.id]);
-
           }
           index++;
         }
@@ -133,7 +145,7 @@ class AlbumPageState extends State<AlbumPage> {
           selectionMode = false;
         });
 
-        await fetchPhotos(); // 重新刷新照片
+        await fetchPhotos();
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('已完成過濾')),
@@ -144,11 +156,13 @@ class AlbumPageState extends State<AlbumPage> {
         );
       }
     } catch (e) {
+      print(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('發送失敗：$e')),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
