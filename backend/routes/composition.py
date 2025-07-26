@@ -5,6 +5,7 @@ import os
 import platform
 import subprocess
 from services.composition_detect import simple_highest_predict
+from services.clutter_detect import analyze_image_with_crops
 from services.remove_portrait import removePortrait
 from dotenv import load_dotenv
 import tempfile
@@ -50,10 +51,11 @@ async def compositionDetection(image: UploadFile = File(...)):
 
 
     top1 = simple_highest_predict(temp_image_path, model_path)
-
+    crop_percentage=analyze_image_with_crops(temp_image_path)
     print(top1[0]['class'])
+    print(crop_percentage)
     if top1:
-        return {"composition": top1[0]['class']}
+        return {"composition": top1[0]['class'],"crop_percentage":crop_percentage}
     else:
         return {"error": "Prediction failed"}
 

@@ -64,51 +64,115 @@ class _NavigationExampleState extends State<NavigationExample> {
       AlbumPage(key: albumPageKey),
       CameraPage(
         cameras: widget.cameras,
-        onSwitchToAlbum: switchToAlbum,  // 傳callback
+        onSwitchToAlbum: switchToAlbum, // 傳callback
       ),
       const ProfilePage(),
     ];
 
     return Scaffold(
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPageIndex = index;
-          });
-
-          // 每次切換到相簿頁時刷新照片
-          if (index == 1) {
-            Future.delayed(const Duration(milliseconds: 100), () {
-              albumPageKey.currentState?.fetchPhotos();
-            });
-          }
-        },
-        indicatorColor: Colors.amber,
-        selectedIndex: currentPageIndex,
-        destinations: const <Widget>[
-          NavigationDestination(
-            selectedIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
-            label: '',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.photo),
-            label: '',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.camera_alt),
-            label: '',
-          ),
-          NavigationDestination(
-            icon: Badge(
-              isLabelVisible: false,
-              child: Icon(Icons.person),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.15), // 半透明淡灰背景
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-            label: '',
-          ),
-        ],
+          ],
+        ),
+        child: NavigationBar(
+          height: 60,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          indicatorColor: Colors.black.withOpacity(0.05), // 柔和粉色透明指示器
+          animationDuration: const Duration(milliseconds: 250),
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+          selectedIndex: currentPageIndex,
+          onDestinationSelected: (int index) {
+            setState(() {
+              currentPageIndex = index;
+            });
+
+            if (index == 1) {
+              Future.delayed(const Duration(milliseconds: 100), () {
+                albumPageKey.currentState?.fetchPhotos();
+              });
+            }
+          },
+          destinations: [
+            _buildNavDestination(
+              icon: Icons.home_outlined,
+              selectedIcon: Icons.home,
+              selected: currentPageIndex == 0,
+            ),
+            _buildNavDestination(
+              icon: Icons.photo_outlined,
+              selectedIcon: Icons.photo,
+              selected: currentPageIndex == 1,
+            ),
+            _buildNavDestination(
+              icon: Icons.camera_alt_outlined,
+              selectedIcon: Icons.camera_alt,
+              selected: currentPageIndex == 2,
+            ),
+            NavigationDestination(
+              icon: Badge(
+                isLabelVisible: false,
+                child: Icon(
+                  Icons.person_outline,
+                  color: currentPageIndex == 3
+                      ? Colors.pink.shade400
+                      : Colors.grey.shade600,
+                  size: 26,
+                ),
+              ),
+              selectedIcon: Badge(
+                isLabelVisible: false,
+                child: Icon(
+                  Icons.person,
+                  color: Colors.pink.shade600,
+                  size: 28,
+                ),
+              ),
+              label: '',
+            ),
+          ],
+        ),
       ),
       body: pages[currentPageIndex],
+    );
+  }
+
+  NavigationDestination _buildNavDestination({
+    required IconData icon,
+    required IconData selectedIcon,
+    required bool selected,
+  }) {
+    return NavigationDestination(
+      icon: AnimatedScale(
+        scale: selected ? 1.2 : 1.0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        child: Icon(
+          icon,
+          color: Colors.grey.shade600,
+          size: 26,
+        ),
+      ),
+      selectedIcon: AnimatedScale(
+        scale: selected ? 1.2 : 1.0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        child: Icon(
+          selectedIcon,
+          color: Colors.blue.shade300,
+          size: 28,
+        ),
+      ),
+      label: '',
     );
   }
 }
