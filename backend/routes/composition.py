@@ -51,7 +51,7 @@ async def compositionDetection(image: UploadFile = File(...)):
 
 
     top1 = simple_highest_predict(temp_image_path, model_path)
-    crop_percentage=analyze_image_with_crops(temp_image_path)
+    crop_percentage=1/(1-2*analyze_image_with_crops(temp_image_path))
     print(top1[0]['class'])
     print(crop_percentage)
     if top1:

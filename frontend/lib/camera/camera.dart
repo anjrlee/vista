@@ -63,8 +63,8 @@ class _CameraPageState extends State<CameraPage> {
 
   // --- 1. 新增 zoom 變數 ---
   double _currentZoomLevel = 1.0;
-  double _minZoomLevel = 1.0;
-  double _maxZoomLevel = 1.0;
+  double _minZoomLevel = 0.5;
+  double _maxZoomLevel = 2;
 
   @override
   void initState() {
@@ -244,11 +244,14 @@ class _CameraPageState extends State<CameraPage> {
         final data = jsonDecode(respStr);
 
         setState(() {
+          _currentZoomLevel=data['crop_percentage'];
           hint["hasText"] = true;
           hint["buttonText"] = "套用";
           hint["textText"] = "推薦構圖: ${data['composition'] ?? ''}";
           predictedComposition = data['composition'];
-        });
+        }
+        );
+
       } else {
         print('伺服器回傳錯誤，狀態碼: ${response.statusCode}');
       }
@@ -307,6 +310,7 @@ class _CameraPageState extends State<CameraPage> {
     if (predictedComposition.isEmpty) return;
     setState(() {
       _composition = predictedComposition;
+
       isAlignmentMode = true;
       lineIndex = 0;
       scores = [];
@@ -314,6 +318,7 @@ class _CameraPageState extends State<CameraPage> {
       hint["buttonText"] = "我對好了";
       hint["textText"] = "請將背景主體對準紅色線/框框";
     });
+    controller.setZoomLevel(_currentZoomLevel);
   }
 
   Future<void> onUserConfirmLine() async {
@@ -332,13 +337,13 @@ class _CameraPageState extends State<CameraPage> {
       }
       setState(() {
         lineIndex = bestLineIndex;
-        hint["textText"] = "主體對準第 ${bestLineIndex + 1} 條線，請按快門拍照";
+        hint["textText"] = "背景主體對準第 ${bestLineIndex + 1} 條線，請按快門拍照";
         hint["buttonText"] = "拍照";
       });
     } else {
       setState(() {
         lineIndex++;
-        hint["textText"] = "請將主體對準第 ${lineIndex + 1} 條線";
+        hint["textText"] = "請將背景主體對準第 ${lineIndex + 1} 條線";
       });
     }
   }
