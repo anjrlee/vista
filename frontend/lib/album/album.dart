@@ -18,7 +18,7 @@ class AlbumPageState extends State<AlbumPage> {
   Set<AssetEntity> selectedPhotos = {};
   bool isLoading = true;
   bool selectionMode = false;
-
+  bool isFiltering = false;
   @override
   void initState() {
     super.initState();
@@ -103,6 +103,24 @@ class AlbumPageState extends State<AlbumPage> {
 
     if (confirmed != true) return;
 
+    // 顯示 loading dialog
+    setState(() {
+      isFiltering = true;
+    });
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text("篩選中..."),
+          ],
+        ),
+      ),
+    );
+
     final baseUrl = dotenv.env['API_BASE_URL'];
     if (baseUrl == null) return;
 
@@ -110,7 +128,6 @@ class AlbumPageState extends State<AlbumPage> {
     final request = http.MultipartRequest('POST', uri);
 
     try {
-      // 將所有選中的照片轉為 file 加入 request.files
       for (AssetEntity entity in selectedPhotos) {
         final file = await entity.file;
         if (file != null) {
@@ -160,8 +177,14 @@ class AlbumPageState extends State<AlbumPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('發送失敗：$e')),
       );
+    } finally {
+      setState(() {
+        isFiltering = false;
+      });
+      Navigator.of(context, rootNavigator: true).pop(); // 關掉 loading dialog
     }
   }
+
 
 
   @override

@@ -62,6 +62,8 @@ class _CameraPageState extends State<CameraPage> {
   };
 
   // --- 1. 新增 zoom 變數 ---
+  double _baseZoomLevel = 1.0;
+  double _tmpZoomLevel=1.0;
   double _currentZoomLevel = 1.0;
   double _minZoomLevel = 0.5;
   double _maxZoomLevel = 2;
@@ -244,8 +246,9 @@ class _CameraPageState extends State<CameraPage> {
         final data = jsonDecode(respStr);
 
         setState(() {
-          _currentZoomLevel=data['crop_percentage'];
+          _tmpZoomLevel=_currentZoomLevel*data['crop_percentage'];
           hint["hasText"] = true;
+          hint["hasButton"] = true;
           hint["buttonText"] = "套用";
           hint["textText"] = "推薦構圖: ${data['composition'] ?? ''}";
           predictedComposition = data['composition'];
@@ -314,8 +317,10 @@ class _CameraPageState extends State<CameraPage> {
       isAlignmentMode = true;
       lineIndex = 0;
       scores = [];
+      _currentZoomLevel=_tmpZoomLevel;
       hint["hasText"] = true;
       hint["buttonText"] = "我對好了";
+      hint["hasButton"]=true;
       hint["textText"] = "請將背景主體對準紅色線/框框";
     });
     controller.setZoomLevel(_currentZoomLevel);
@@ -371,27 +376,40 @@ class _CameraPageState extends State<CameraPage> {
             child: RepaintBoundary(
               key: previewKey,
               child: ColorFiltered(
-                colorFilter: _getColorFilterForSelected(_filter) ?? const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-                child: CameraPreviewWidget(controller: controller),
+                colorFilter: _getColorFilterForSelected(_filter) ??
+                    const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                child: GestureDetector(
+                  onScaleStart: (details) {
+                    _baseZoomLevel = _currentZoomLevel;
+                  },
+                  onScaleUpdate: (details) async {
+                    double newZoom = (_baseZoomLevel * details.scale)
+                        .clamp(_minZoomLevel, _maxZoomLevel);
+                    setState(() {
+                      _currentZoomLevel = newZoom;
+                    });
+                    await controller.setZoomLevel(newZoom);
+                  },
+                  child: CameraPreviewWidget(controller: controller),
+                ),
               ),
             ),
           ),
 
-          // --- 3. 新增 Slider 來控制 zoom ---
+          // 🔍 底部顯示當前倍率的小黑框
           Positioned(
             bottom: 100,
-            left: 20,
-            right: 20,
-            child: Slider(
-              min: _minZoomLevel,
-              max: _maxZoomLevel,
-              value: _currentZoomLevel.clamp(_minZoomLevel, _maxZoomLevel),
-              onChanged: (value) async {
-                setState(() {
-                  _currentZoomLevel = value;
-                });
-                await controller.setZoomLevel(value);
-              },
+            left: MediaQuery.of(context).size.width / 2 - 30,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                "${_currentZoomLevel.toStringAsFixed(1)}x",
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
             ),
           ),
 
@@ -406,6 +424,12 @@ class _CameraPageState extends State<CameraPage> {
             buttonText: hint['buttonText']?.toString() ?? '',
             onButtonTap: (value) async {
               if (value == "點擊獲取構圖推薦") {
+                setState(() {
+                  hint["hasButton"] = false;
+                  hint["hasText"] = true;
+                  hint["textText"] = "正在獲取最佳構圖，請稍後";
+                });
+
                 await getComposition();
               } else if (value == "套用") {
                 startAlignmentMode();
@@ -433,5 +457,6 @@ class _CameraPageState extends State<CameraPage> {
         ],
       ),
     );
+
   }
 }
