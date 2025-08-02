@@ -7,7 +7,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 
-
 class PhotoScore extends StatefulWidget {
   const PhotoScore({Key? key}) : super(key: key);
 
@@ -20,6 +19,17 @@ class _PhotoScoreState extends State<PhotoScore> {
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
   final String _uploadUrl = '${dotenv.env['API_BASE_URL']}/aestheticScoreFunction';
+
+  // 分數縮放函數：將 3.5-7.5 映射到 0-10
+  double _scaleScore(double originalScore) {
+    double scaledScore = (originalScore - 3.5) * 2.5;
+    return scaledScore.clamp(0.0, 10.0);
+  }
+
+  // 將 0-10 分數轉換為 0-5 星級
+  double _convertToStars(double scaledScore) {
+    return (scaledScore / 10.0) * 5.0;
+  }
 
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(
@@ -61,8 +71,13 @@ class _PhotoScoreState extends State<PhotoScore> {
 
       if (response.statusCode == 200) {
         final String body = response.body;
-        final double score = double.parse(body);
-        _showResult(score);
+        final double originalScore = double.parse(body);
+        
+        // 縮放分數並轉換為星級
+        final double scaledScore = _scaleScore(originalScore);
+        final double starRating = _convertToStars(scaledScore);
+        
+        _showResult(originalScore, scaledScore, starRating);
       } else {
         _showError('上傳失敗，狀態碼: ${response.statusCode}');
       }
@@ -75,12 +90,62 @@ class _PhotoScoreState extends State<PhotoScore> {
     }
   }
 
-  void _showResult(dynamic score) {
+  // 建立星星評分 Widget
+  Widget _buildStarRating(double rating) {
+    List<Widget> stars = [];
+    int fullStars = rating.floor();
+    double remainder = rating - fullStars;
+    
+    // 填滿的星星
+    for (int i = 0; i < fullStars; i++) {
+      stars.add(const Icon(
+        Icons.star,
+        color: Colors.amber,
+        size: 32,
+      ));
+    }
+    
+    // 半顆星
+    if (remainder >= 0.5) {
+      stars.add(const Icon(
+        Icons.star_half,
+        color: Colors.amber,
+        size: 32,
+      ));
+      fullStars++;
+    }
+    
+    // 空心星星
+    for (int i = fullStars; i < 5; i++) {
+      stars.add(const Icon(
+        Icons.star_border,
+        color: Colors.amber,
+        size: 32,
+      ));
+    }
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: stars,
+    );
+  }
+
+  void _showResult(double originalScore, double scaledScore, double starRating) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('評分結果'),
-        content: Text('您的照片評分: $score'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildStarRating(starRating),
+            const SizedBox(height: 8),
+            Text(
+              '評分: ${starRating.toStringAsFixed(1)} / 5',
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

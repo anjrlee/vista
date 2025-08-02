@@ -12,7 +12,7 @@ async def aesthetic_score_function_route(
 ):
     image_bytes = await image.read()
     mean = calculate_aesthetic_score(image_bytes)
-    return PlainTextResponse(f"{mean:.2f}")
+    return PlainTextResponse(f"{mean:.1f}")
 
 
 @router.post("/filterAlbum")
