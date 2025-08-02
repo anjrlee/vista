@@ -16,17 +16,14 @@ async def aesthetic_score_function_route(
 
 
 @router.post("/filterAlbum")
-async def filter_album(image: List[UploadFile] = File(...)):
+async def filter_album(image: List[UploadFile] = File(...),percentage: float = Form(...)):
     scores = []
-    mean=0
     for img in image:
         image_bytes = await img.read()
         tmp = calculate_aesthetic_score(image_bytes)
         scores.append(tmp)
-        mean+=tmp
-    mean = mean / len(image) if image else 0
-    print("mean score:", mean)
-    print(scores)
-    result = [bool(score >= mean) for score in scores]
+    baseline=sorted(scores)[int(len(scores)*percentage/100)]
+    print("baseline",baseline)
+    result = [bool(score >= baseline) for score in scores]
     print(result)
     return result

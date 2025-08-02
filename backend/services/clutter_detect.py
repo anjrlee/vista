@@ -59,7 +59,7 @@ def crop_border(image, percent=0):
 def analyze_image_with_crops(image_path):
     original = cv2.imread(image_path)
 
-    crop_percentage = [0, 0.05, 0.10, 0.15]
+    crop_percentage = [0, 0.05, 0.10, 0.15,0.2]
     images = [crop_border(original, i) for i in crop_percentage]
 
 

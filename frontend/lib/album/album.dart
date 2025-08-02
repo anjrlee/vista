@@ -126,7 +126,7 @@ class AlbumPageState extends State<AlbumPage> {
 
     final uri = Uri.parse('$baseUrl/filterAlbum');
     final request = http.MultipartRequest('POST', uri);
-
+    request.fields['percentage'] = 20.toString();
     try {
       for (AssetEntity entity in selectedPhotos) {
         final file = await entity.file;
