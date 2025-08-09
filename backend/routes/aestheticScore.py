@@ -5,6 +5,8 @@ from typing import List
 
 router = APIRouter()
 
+
+
 @router.post("/aestheticScoreFunction")
 async def aesthetic_score_function_route(
     image: UploadFile = File(...),

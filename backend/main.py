@@ -7,7 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 
-from routes import hello, test,composition ,aestheticScore # 匯入剛剛寫的路由模組
+from routes import hello, test,composition ,aestheticScore ,newAction
 
 app = FastAPI()
 
@@ -29,3 +29,5 @@ app.include_router(hello.router)
 app.include_router(test.router)
 app.include_router(composition.router)
 app.include_router(aestheticScore.router)
+app.include_router(newAction.router)
+

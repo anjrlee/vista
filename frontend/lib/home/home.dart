@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'featureCard.dart';
 import 'photoScore.dart';
+import 'newAction.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -16,8 +17,8 @@ class _HomePageState extends State<HomePage> {
       'title': '新增我的動作',
       'imageUrls': ['assets/featureCard/pose.png',],
       'isMultiPhoto': false,
-      'showLock':true,
-      'onTap':''
+      'showLock':false,
+      'onTap':() => const NewAction()
     },
     {
       'title': '本日推薦',
