@@ -52,7 +52,8 @@ async def compositionDetection(image: UploadFile = File(...)):
 
 
     top1 = simple_highest_predict(temp_image_path, model_path)
-    crop_percentage=1/(1-2*analyze_image_with_crops(temp_image_path))
+    crop_percentage,image_bytes=analyze_image_with_crops(temp_image_path)
+    crop_percentage=1/(1-2*crop_percentage)
     pose_image=poseDetection(image_bytes)
     if top1:
         return {"composition": top1[0]['class'],"crop_percentage":crop_percentage,"poseIMG":pose_image}
