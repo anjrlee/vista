@@ -1,3 +1,5 @@
 frontend/.env
 backend/.env
 backend/config/vista-8a3cf-firebase-adminsdk-fbsvc-312c3e93eb.json
+__pycache__/
+*.pyc
