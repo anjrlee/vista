@@ -340,9 +340,18 @@ class _CameraPageState extends State<CameraPage> {
           bestLineIndex = i;
         }
       }
+
+      setState(() {
+        lineIndex = bestLineIndex;
+        hint["textText"] = "背景主體對準第 ${bestLineIndex + 1} 條線，正在自動調整曝光...";
+        hint["hasButton"] = false;
+      });
+      await findBestExposureForCurrentLine();
+
       setState(() {
         lineIndex = bestLineIndex;
         hint["textText"] = "背景主體對準第 ${bestLineIndex + 1} 條線，請按快門拍照";
+        hint["hasButton"]=true;
         hint["buttonText"] = "拍照";
       });
     } else {
@@ -361,6 +370,55 @@ class _CameraPageState extends State<CameraPage> {
       predictedComposition = "";
       _composition = "none";
     });
+  }
+
+  Future<void> findBestExposureForCurrentLine() async {
+    if (!controller.value.isInitialized) return;
+
+    try {
+      // 取得相機支持的曝光補償範圍
+      final minExposure = await controller.getMinExposureOffset();
+      final maxExposure = await controller.getMaxExposureOffset();
+
+      double bestScore = double.negativeInfinity;
+      double bestExposure = 0.0;
+
+      // 這裡先測幾個等間距值
+      List<double> exposureValues = List.generate(5, (i) {
+        return minExposure + i * (maxExposure - minExposure) / 4;
+      });
+
+      for (double exposure in exposureValues) {
+        await controller.setExposureOffset(exposure);
+        await Future.delayed(const Duration(milliseconds: 300));
+        final XFile file = await controller.takePicture();
+        final apiUrl = Uri.parse('${dotenv.env['API_BASE_URL']}/exposureScoreFunction');
+        var request = http.MultipartRequest('POST', apiUrl);
+        request.files.add(await http.MultipartFile.fromPath(
+          'image',
+          file.path,
+          contentType: MediaType('image', 'jpeg'),
+        ));
+        request.fields['exposure_value'] = exposure.toString();
+        final response = await request.send();
+
+        if (response.statusCode == 200) {
+          final respStr = await response.stream.bytesToString();
+          final score = double.tryParse(respStr) ?? double.negativeInfinity;
+          if (score > bestScore) {
+            bestScore = score;
+            bestExposure = exposure;
+          }
+        }
+      }
+
+      // 套用最佳曝光
+      await controller.setExposureOffset(bestExposure);
+      print("最佳曝光值: $bestExposure, 分數: $bestScore");
+
+    } catch (e) {
+      print("自動曝光調整失敗: $e");
+    }
   }
 
   @override
