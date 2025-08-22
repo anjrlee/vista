@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
+from PIL import Image
+import io
+import base64
 
 def calculate_color_clutter(image_path, k_range=(2, 10)):
     # 讀取圖像並轉為 HSV
@@ -57,18 +60,28 @@ def crop_border(image, percent=0):
     return image[dh:h-dh, dw:w-dw]
 
 def analyze_image_with_crops(image_path):
-    original = cv2.imread(image_path)
+    # 讀圖
+    original = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
 
-    crop_percentage = [0, 0.05, 0.10, 0.15,0.2]
-    images = [crop_border(original, i) for i in crop_percentage]
-
+    crop_percentages = [0, 0.05, 0.10, 0.15, 0.2]
+    images = [crop_border(original, i) for i in crop_percentages]
 
     scores = [calculate_color_clutter_from_image(img) for img in images]
     best_idx = np.argmin(scores)
 
-    # 顯示三張圖 + 分數 + 用紅框標出最佳
+    best_cropped = images[best_idx]
 
-    return crop_percentage[best_idx]
+    # 將 numpy array 轉 PIL Image
+    if best_cropped.shape[2] == 3:  # BGR → RGB
+        best_cropped = cv2.cvtColor(best_cropped, cv2.COLOR_BGR2RGB)
+    img_pil = Image.fromarray(best_cropped)
 
+    # 轉成 PNG Base64
+    buffered = io.BytesIO()
+    img_pil.save(buffered, format="PNG")
+    img_bytes = buffered.getvalue()
+    img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+
+    return crop_percentages[best_idx], img_base64
 
 

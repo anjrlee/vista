@@ -47,7 +47,7 @@ class _CameraPageState extends State<CameraPage> {
   String _composition = "none";
   String _action = "none";
   String _filter = "none";
-
+  Uint8List? _poseImageBytes;
   String predictedComposition = "";
 
   bool isAlignmentMode = false;
@@ -252,6 +252,7 @@ class _CameraPageState extends State<CameraPage> {
           hint["buttonText"] = "套用";
           hint["textText"] = "推薦構圖: ${data['composition'] ?? ''}";
           predictedComposition = data['composition'];
+          _poseImageBytes = base64Decode(data['poseIMG']);
         }
         );
 
@@ -453,7 +454,6 @@ class _CameraPageState extends State<CameraPage> {
               ),
             ),
           ),
-
           // 🔍 底部顯示當前倍率的小黑框
           Positioned(
             bottom: 100,
@@ -470,7 +470,13 @@ class _CameraPageState extends State<CameraPage> {
               ),
             ),
           ),
-
+          if (_poseImageBytes != null && isAlignmentMode)
+            Positioned.fill(
+              child: Image.memory(
+                _poseImageBytes!,
+                fit: BoxFit.cover,
+              ),
+            ),
           CompositionLines(
             composition: _composition,
             highlightIndex: isAlignmentMode ? lineIndex : null,
@@ -512,6 +518,7 @@ class _CameraPageState extends State<CameraPage> {
               left: _left,
               top: _top,
             ),
+
         ],
       ),
     );

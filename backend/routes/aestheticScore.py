@@ -5,6 +5,8 @@ from typing import List
 
 router = APIRouter()
 
+
+
 @router.post("/aestheticScoreFunction")
 async def aesthetic_score_function_route(
     image: UploadFile = File(...),
@@ -24,6 +26,7 @@ async def filter_album(image: List[UploadFile] = File(...),percentage: float = F
         scores.append(tmp)
     baseline=sorted(scores)[int(len(scores)*percentage/100)]
     print("baseline",baseline)
+    print("percentage",percentage)
     result = [bool(score >= baseline) for score in scores]
     print(result)
     return result

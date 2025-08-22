@@ -19,6 +19,8 @@ class AlbumPageState extends State<AlbumPage> {
   bool isLoading = true;
   bool selectionMode = false;
   bool isFiltering = false;
+  int? selectedPercentage; // 使用者選擇的刪除比例
+
   @override
   void initState() {
     super.initState();
@@ -74,8 +76,6 @@ class AlbumPageState extends State<AlbumPage> {
     });
   }
 
-
-
   Future<void> filterSelectedPhotos() async {
     if (selectedPhotos.length > 30) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -84,10 +84,37 @@ class AlbumPageState extends State<AlbumPage> {
       return;
     }
 
+    // 讓使用者選擇刪除比例
+    selectedPercentage = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('選擇刪除比例'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('刪除 50%'),
+              onTap: () => Navigator.pop(context, 50),
+            ),
+            ListTile(
+              title: const Text('刪除 30%'),
+              onTap: () => Navigator.pop(context, 30),
+            ),
+            ListTile(
+              title: const Text('刪除 20%'),
+              onTap: () => Navigator.pop(context, 20),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (selectedPercentage == null) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('確認過濾?'),
+        title: Text('確認刪除 $selectedPercentage%?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -103,7 +130,6 @@ class AlbumPageState extends State<AlbumPage> {
 
     if (confirmed != true) return;
 
-    // 顯示 loading dialog
     setState(() {
       isFiltering = true;
     });
@@ -126,7 +152,7 @@ class AlbumPageState extends State<AlbumPage> {
 
     final uri = Uri.parse('$baseUrl/filterAlbum');
     final request = http.MultipartRequest('POST', uri);
-    request.fields['percentage'] = 20.toString();
+    request.fields['percentage'] = selectedPercentage.toString(); // ✅ 使用選擇的比例
     try {
       for (AssetEntity entity in selectedPhotos) {
         final file = await entity.file;
@@ -185,8 +211,6 @@ class AlbumPageState extends State<AlbumPage> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -220,14 +244,12 @@ class AlbumPageState extends State<AlbumPage> {
                   selectionMode = true;
                 });
               },
-              child:
-              const Text('選取'),
+              child: const Text('選取'),
             ),
           if (selectionMode)
             TextButton(
               onPressed: filterSelectedPhotos,
-              child:
-              const Text('篩選'),
+              child: const Text('篩選'),
             ),
         ],
       ),
@@ -249,12 +271,11 @@ class AlbumPageState extends State<AlbumPage> {
               child: Stack(
                 children: [
                   FutureBuilder<Uint8List?>(
-                    future: photo.thumbnailDataWithSize(
-                        const ThumbnailSize(200, 200)),
+                    future:
+                    photo.thumbnailDataWithSize(const ThumbnailSize(200, 200)),
                     builder: (context, snapshot) {
                       final bytes = snapshot.data;
-                      if (snapshot.connectionState ==
-                          ConnectionState.done &&
+                      if (snapshot.connectionState == ConnectionState.done &&
                           bytes != null) {
                         return Positioned.fill(
                           child: Image.memory(bytes, fit: BoxFit.cover),
