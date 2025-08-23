@@ -16,4 +16,4 @@ matplotlib
 opencv-python
 ultralytics
 requests
-mediapipe
+mediapipe==0.10.5
