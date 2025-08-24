@@ -4,11 +4,23 @@ import './menu_item.dart';
 
 Future<String?> showActionMenu(BuildContext context, {String? selectedLabel}) {
   final ActionItems = [
-    const MenuItem(imagePath: 'assets/filters/rule_of_thirds.png', label: 'none', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/rule_of_thirds.png', label: 'fly', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/center.png', label: 'dance', shape: ImageShape.square),
-    const MenuItem(imagePath: 'assets/filters/diagonal.png', label: 'cry', shape: ImageShape.square),
+    const MenuItem(
+      imagePath: 'assets/pose_black/none.png', // 你可以放一張空白圖或特殊圖
+      label: 'none',
+      shape: ImageShape.square,
+    ),
+    ...List.generate(1681 - 1658 + 1, (index) {
+      final number = 1658 + index;
+      final fileName = 'IMG_${number}-removebg-preview.png';
+      return MenuItem(
+        imagePath: 'assets/pose_black/$fileName',
+        label: 'pose${index + 1}',
+        shape: ImageShape.square,
+      );
+    }),
   ];
+
+
 
   int selectedIndex = 0;
   if (selectedLabel != null) {
