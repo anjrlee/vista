@@ -109,7 +109,7 @@ class PosePredictor:
         
         return canvas
 
-def poseDetection(image_bytes: bytes) -> str:
+def poseDetection(image_str: str) -> str:
 
     global predictor
 
@@ -121,6 +121,7 @@ def poseDetection(image_bytes: bytes) -> str:
             return ""
 
     try:
+        image_bytes = base64.b64decode(image_str)
         image_pil = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     except Exception as e:
         print(f"無法讀取圖片 bytes: {e}")

@@ -131,6 +131,15 @@ class _PhotoScoreState extends State<PhotoScore> {
   }
 
   void _showResult(double originalScore, double scaledScore, double starRating) {
+    double decimalPart = starRating - starRating.truncate();
+    int firstDigit = (decimalPart * 10).toInt();
+
+    if (firstDigit >= 5) {
+      starRating = starRating.truncateToDouble() + 0.5;
+    } else {
+      starRating = starRating.truncateToDouble();
+    }
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -141,7 +150,7 @@ class _PhotoScoreState extends State<PhotoScore> {
             _buildStarRating(starRating),
             const SizedBox(height: 8),
             Text(
-              '評分: ${starRating.toStringAsFixed(1)} / 5',
+              '評分: ${starRating} / 5',
               style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],

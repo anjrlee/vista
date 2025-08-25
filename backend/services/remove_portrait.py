@@ -60,7 +60,7 @@ class PortraitRemover:
 
 def removePortrait(image_bytes: bytes) -> bytes:
     API_KEY = os.getenv("CLIPDROP_API_KEY", "YOUR_CLIPDROP_API_KEY")
-    
+
     if API_KEY == "YOUR_CLIPDROP_API_KEY" or not API_KEY:
         print("請設定 CLIPDROP_API_KEY 環境變數，或直接在 remove_portrait.py 中填入 API key。")
         return image_bytes
