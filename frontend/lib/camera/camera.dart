@@ -133,6 +133,7 @@ class _CameraPageState extends State<CameraPage> {
     if (selected != null && mounted) {
       setState(() {
         _action = selected;
+        print(_action);
       });
     }
   }
