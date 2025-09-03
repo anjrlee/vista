@@ -49,15 +49,22 @@ class _CameraPageState extends State<CameraPage> {
   String _filter = "none";
   Uint8List? _poseImageBytes;
   String predictedComposition = "";
-
   bool isAlignmentMode = false;
   int lineIndex = 0;
   List<double> scores = [];
+  bool checkPose = false;
 
   final hint = {
     "hasText": false,
     "hasButton": true,
     "buttonText": "點擊獲取構圖推薦",
+    "textText": "",
+  };
+
+  final poseHint = {
+    "hasText": false,
+    "hasButton": true,
+    "buttonText": "點擊獲取姿勢建議",
     "textText": "",
   };
 
@@ -253,7 +260,7 @@ class _CameraPageState extends State<CameraPage> {
           hint["buttonText"] = "套用";
           hint["textText"] = "推薦構圖: ${data['composition'] ?? ''}";
           predictedComposition = data['composition'];
-          _poseImageBytes = base64Decode(data['poseIMG']);
+          // _poseImageBytes = base64Decode(data['poseIMG']);
         }
         );
 
@@ -296,6 +303,47 @@ class _CameraPageState extends State<CameraPage> {
       }
     } catch (e) {
       return null;
+    }
+  }
+
+  Future<void> getPoseImage() async {
+    try {
+      if (!controller.value.isInitialized) return;
+
+      final XFile file = await controller.takePicture();
+
+      final apiUrl = Uri.parse('${dotenv.env['API_BASE_URL']}/poseDetectionFunction');
+
+      var request = http.MultipartRequest('POST', apiUrl);
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        file.path,
+        contentType: MediaType('image', 'jpeg'), // 若確定是 jpeg，沒有也行
+      ));
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        // 讀回應字串
+        final respStr = await response.stream.bytesToString();
+        final data = jsonDecode(respStr);
+        final newPoseImageBytes = base64Decode(data['poseIMG']);
+
+        setState(() {
+          poseHint["hasText"] = false;
+          poseHint["hasButton"] = true;
+          poseHint["buttonText"] = "點擊獲取姿勢建議";
+          poseHint["textText"] = "";
+          _poseImageBytes = newPoseImageBytes;
+          checkPose = true;
+          hint["hasButton"] = true;
+        });
+
+      } else {
+        print('伺服器回傳錯誤123，狀態碼: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('例外錯誤: $e');
     }
   }
 
@@ -471,7 +519,7 @@ class _CameraPageState extends State<CameraPage> {
               ),
             ),
           ),
-          if (_poseImageBytes != null && isAlignmentMode)
+          if (_poseImageBytes != null && checkPose == true)
             Positioned.fill(
               child: Image.memory(
                 _poseImageBytes!,
@@ -482,28 +530,65 @@ class _CameraPageState extends State<CameraPage> {
             composition: _composition,
             highlightIndex: isAlignmentMode ? lineIndex : null,
           ),
-          CameraHintText(
-            hasButton: hint["hasButton"] == true,
-            hasText: hint["hasText"] == true,
-            textText: hint['textText']?.toString() ?? '',
-            buttonText: hint['buttonText']?.toString() ?? '',
-            onButtonTap: (value) async {
-              if (value == "點擊獲取構圖推薦") {
-                setState(() {
-                  hint["hasButton"] = false;
-                  hint["hasText"] = true;
-                  hint["textText"] = "正在獲取最佳構圖，請稍後";
-                });
+          Positioned(
+            top: 50,
+            right: 20,
+            child: Container(
+              width: 150,
+              child: CameraHintText(
+                hasButton: poseHint["hasButton"] == true,
+                hasText: poseHint["hasText"] == true,
+                textText: poseHint['textText']?.toString() ?? '',
+                buttonText: poseHint['buttonText']?.toString() ?? '',
+                onButtonTap: (value) async {
+                  if (value == "點擊獲取姿勢建議") {
+                    setState(() {
+                      poseHint["hasButton"] = false;
+                      poseHint["hasText"] = true;
+                      poseHint["textText"] = "正在獲取姿勢建議，請稍後";
+                      hint["hasButton"] = false;
+                      checkPose = false;
+                      _poseImageBytes = null;
+                    });
+                    await getPoseImage();
+                  }
+                },
+              ),
+            ),
+          ),
+          Positioned(
+            top: 50,
+            left: 20,
+            child: Container(
+              width: 150,
+              child: CameraHintText(
+                hasButton: hint["hasButton"] == true,
+                hasText: hint["hasText"] == true,
+                textText: hint['textText']?.toString() ?? '',
+                buttonText: hint['buttonText']?.toString() ?? '',
+                  onButtonTap: (value) async {
+                    if (value == "點擊獲取構圖推薦") {
+                      setState(() {
+                        hint["hasButton"] = false;
+                        hint["hasText"] = true;
+                        poseHint["hasButton"] = false;
+                        hint["textText"] = "正在獲取最佳構圖，請稍後";
+                      });
 
-                await getComposition();
-              } else if (value == "套用") {
-                startAlignmentMode();
-              } else if (value == "我對好了") {
-                await onUserConfirmLine();
-              } else if (value == "拍照") {
-                await onFinalCapture();
-              }
-            },
+                      await getComposition();
+                    } else if (value == "套用") {
+                      startAlignmentMode();
+                    } else if (value == "我對好了") {
+                      await onUserConfirmLine();
+                      setState(() {
+                        poseHint["hasButton"] = true;
+                      });
+                    } else if (value == "拍照") {
+                      await onFinalCapture();
+                    }
+                  },
+                ),
+            ),
           ),
           CameraControlsWidget(
             onTakePicture: _takePictureAndSave,

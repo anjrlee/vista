@@ -121,8 +121,7 @@ def poseDetection(image_str: str) -> str:
             return ""
 
     try:
-        image_bytes = base64.b64decode(image_str)
-        image_pil = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        image_pil = Image.open(io.BytesIO(image_str)).convert("RGB")
     except Exception as e:
         print(f"無法讀取圖片 bytes: {e}")
         return ""
