@@ -20,6 +20,8 @@ import 'widgets/camera_hint.dart';
 import 'widgets/camera_preview_widget.dart';
 import 'widgets/camera_controls_widget.dart';
 import 'widgets/photo_animation_widget.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:typed_data';
 
 class CameraPage extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -135,15 +137,37 @@ class _CameraPageState extends State<CameraPage> {
     }
   }
 
+
+
   Future<void> _handleShowAction() async {
-    final selected = await showActionMenu(context, selectedLabel: _action);
+    final selected = await showActionMenu(
+      context,
+      selectedLabel: _action,
+    );
+
     if (selected != null && mounted) {
       setState(() {
         _action = selected;
         print(_action);
       });
+
+      final fileName = 'IMG_${_action}-removebg-preview.png';
+      final imagePath = 'assets/pose_black/$fileName';
+
+      try {
+        final bytes = await rootBundle.load(imagePath);
+        setState(() {
+          _poseImageBytes = bytes.buffer.asUint8List();
+          checkPose=true;
+
+        });
+      } catch (e) {
+        print("❌ Error loading image: $e");
+      }
     }
   }
+
+
 
   Future<void> _handleShowFilter() async {
     final selected = await showFilterMenu(context, selectedLabel: _filter);

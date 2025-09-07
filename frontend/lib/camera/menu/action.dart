@@ -14,11 +14,13 @@ Future<String?> showActionMenu(BuildContext context, {String? selectedLabel}) {
       final fileName = 'IMG_${number}-removebg-preview.png';
       return MenuItem(
         imagePath: 'assets/pose_black/$fileName',
-        label: 'pose${index + 1}',
+        label: number.toString(),
         shape: ImageShape.square,
       );
     }),
   ];
+
+
 
 
 
