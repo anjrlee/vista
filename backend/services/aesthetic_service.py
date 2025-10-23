@@ -29,4 +29,5 @@ def calculate_aesthetic_score(image_bytes: bytes) -> float:
 
     mean = mean_score(scores)
     # std = std_score(scores)
+    print(f"Aesthetic mean score: {mean:.4f}")
     return mean
