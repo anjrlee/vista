@@ -11,7 +11,9 @@ WORKDIR /app
 
 COPY requirements.txt .
 # 安裝 Python 套件
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir --prefer-binary -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+
 
 # 複製檔案
 COPY . /app
